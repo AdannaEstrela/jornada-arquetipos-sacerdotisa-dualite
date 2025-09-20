@@ -21,23 +21,29 @@ const ChapterPage = () => {
   // Local state for input fields to prevent re-rendering issues
   const [localQuizAnswers, setLocalQuizAnswers] = React.useState<{[key: number]: string}>({});
   const [localNote, setLocalNote] = React.useState('');
+  const [isInitialized, setIsInitialized] = React.useState(false);
   const [debounceTimers, setDebounceTimers] = React.useState<{[key: string]: NodeJS.Timeout}>({});
   
   const chapter = chapters.find(c => c.day.toString() === day);
 
   // Initialize local state with data from context
   React.useEffect(() => {
-    if (chapter) {
+    if (chapter && !isInitialized) {
       const quizAnswersForDay = progress.quizAnswers?.[chapter.day] || {};
       const noteForDay = progress.notes?.[chapter.day] || '';
       setLocalQuizAnswers(quizAnswersForDay);
       setLocalNote(noteForDay);
+      setIsInitialized(true);
     }
-  }, [chapter, progress.quizAnswers, progress.notes]);
+  }, [chapter, progress.quizAnswers, progress.notes, isInitialized]);
 
+  // Reset initialization when chapter changes
+  React.useEffect(() => {
+    setIsInitialized(false);
+  }, [day]);
   // Debounced update functions
-  const debouncedUpdateQuizAnswer = React.useCallback((day: number, questionIndex: number, answer: string) => {
-    const key = `quiz-${day}-${questionIndex}`;
+  const debouncedUpdateQuizAnswer = React.useCallback((dayNum: number, questionIndex: number, answer: string) => {
+    const key = `quiz-${dayNum}-${questionIndex}`;
     
     // Clear existing timer
     if (debounceTimers[key]) {
@@ -46,7 +52,7 @@ const ChapterPage = () => {
     
     // Set new timer
     const timer = setTimeout(() => {
-      updateQuizAnswer(day, questionIndex, answer);
+      updateQuizAnswer(dayNum, questionIndex, answer);
       setDebounceTimers(prev => {
         const newTimers = { ...prev };
         delete newTimers[key];
@@ -57,8 +63,8 @@ const ChapterPage = () => {
     setDebounceTimers(prev => ({ ...prev, [key]: timer }));
   }, [updateQuizAnswer, debounceTimers]);
 
-  const debouncedUpdateNote = React.useCallback((day: number, note: string) => {
-    const key = `note-${day}`;
+  const debouncedUpdateNote = React.useCallback((dayNum: number, note: string) => {
+    const key = `note-${dayNum}`;
     
     // Clear existing timer
     if (debounceTimers[key]) {
@@ -67,7 +73,7 @@ const ChapterPage = () => {
     
     // Set new timer
     const timer = setTimeout(() => {
-      updateNote(day, note);
+      updateNote(dayNum, note);
       setDebounceTimers(prev => {
         const newTimers = { ...prev };
         delete newTimers[key];
