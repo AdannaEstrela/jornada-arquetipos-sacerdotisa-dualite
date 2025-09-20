@@ -116,7 +116,7 @@ const ChapterPage = () => {
             <div key={i} className="mt-4">
               <p className="font-semibold">{q}</p>
               <textarea
-                className="w-full p-2 mt-2 bg-stone-100 dark:bg-gray-700 rounded-md border border-stone-300 dark:border-gray-600 focus:ring-2 focus:ring-brand-purple"
+                className="w-full p-3 mt-2 bg-white dark:bg-gray-800 rounded-md border border-stone-300 dark:border-gray-600 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple outline-none resize-vertical min-h-[80px] text-gray-900 dark:text-gray-100"
                 rows={3}
                 placeholder="Sua reflexão..."
                 value={quizAnswersForDay[i] || ''}
@@ -168,7 +168,7 @@ const ChapterPage = () => {
         <Section title="Diário da Sacerdotisa" icon={<BookHeart size={24} />}>
           <p>Anote aqui seus sonhos, insights, emoções e sincronicidades do dia.</p>
           <textarea 
-            className="w-full p-2 mt-2 bg-stone-100 dark:bg-gray-700 rounded-md border border-stone-300 dark:border-gray-600 focus:ring-2 focus:ring-brand-purple"
+            className="w-full p-3 mt-2 bg-white dark:bg-gray-800 rounded-md border border-stone-300 dark:border-gray-600 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple outline-none resize-vertical min-h-[120px] text-gray-900 dark:text-gray-100"
             rows={5}
             placeholder="Suas anotações pessoais..."
             value={noteForDay}
