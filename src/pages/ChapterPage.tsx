@@ -18,7 +18,72 @@ const ChapterPage = () => {
     loading
   } = useAppContext();
   
+  // Local state for input fields to prevent re-rendering issues
+  const [localQuizAnswers, setLocalQuizAnswers] = React.useState<{[key: number]: string}>({});
+  const [localNote, setLocalNote] = React.useState('');
+  const [debounceTimers, setDebounceTimers] = React.useState<{[key: string]: NodeJS.Timeout}>({});
+  
   const chapter = chapters.find(c => c.day.toString() === day);
+
+  // Initialize local state with data from context
+  React.useEffect(() => {
+    if (chapter) {
+      const quizAnswersForDay = progress.quizAnswers?.[chapter.day] || {};
+      const noteForDay = progress.notes?.[chapter.day] || '';
+      setLocalQuizAnswers(quizAnswersForDay);
+      setLocalNote(noteForDay);
+    }
+  }, [chapter, progress.quizAnswers, progress.notes]);
+
+  // Debounced update functions
+  const debouncedUpdateQuizAnswer = React.useCallback((day: number, questionIndex: number, answer: string) => {
+    const key = `quiz-${day}-${questionIndex}`;
+    
+    // Clear existing timer
+    if (debounceTimers[key]) {
+      clearTimeout(debounceTimers[key]);
+    }
+    
+    // Set new timer
+    const timer = setTimeout(() => {
+      updateQuizAnswer(day, questionIndex, answer);
+      setDebounceTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[key];
+        return newTimers;
+      });
+    }, 500);
+    
+    setDebounceTimers(prev => ({ ...prev, [key]: timer }));
+  }, [updateQuizAnswer, debounceTimers]);
+
+  const debouncedUpdateNote = React.useCallback((day: number, note: string) => {
+    const key = `note-${day}`;
+    
+    // Clear existing timer
+    if (debounceTimers[key]) {
+      clearTimeout(debounceTimers[key]);
+    }
+    
+    // Set new timer
+    const timer = setTimeout(() => {
+      updateNote(day, note);
+      setDebounceTimers(prev => {
+        const newTimers = { ...prev };
+        delete newTimers[key];
+        return newTimers;
+      });
+    }, 500);
+    
+    setDebounceTimers(prev => ({ ...prev, [key]: timer }));
+  }, [updateNote, debounceTimers]);
+
+  // Cleanup timers on unmount
+  React.useEffect(() => {
+    return () => {
+      Object.values(debounceTimers).forEach(timer => clearTimeout(timer));
+    };
+  }, [debounceTimers]);
 
   React.useEffect(() => {
     if (chapter && !progress.completedDays.includes(chapter.day)) {
@@ -66,8 +131,6 @@ const ChapterPage = () => {
     </motion.div>
   );
 
-  const quizAnswersForDay = progress.quizAnswers?.[chapter.day] || {};
-  const noteForDay = progress.notes?.[chapter.day] || '';
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -119,8 +182,12 @@ const ChapterPage = () => {
                 className="w-full p-3 mt-2 bg-white dark:bg-gray-800 rounded-md border border-stone-300 dark:border-gray-600 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple outline-none resize-vertical min-h-[80px] text-gray-900 dark:text-gray-100"
                 rows={3}
                 placeholder="Sua reflexão..."
-                value={quizAnswersForDay[i] || ''}
-                onChange={(e) => updateQuizAnswer(chapter.day, i, e.target.value)}
+                value={localQuizAnswers[i] || ''}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setLocalQuizAnswers(prev => ({ ...prev, [i]: newValue }));
+                  debouncedUpdateQuizAnswer(chapter.day, i, newValue);
+                }}
               />
             </div>
           ))}
@@ -171,8 +238,12 @@ const ChapterPage = () => {
             className="w-full p-3 mt-2 bg-white dark:bg-gray-800 rounded-md border border-stone-300 dark:border-gray-600 focus:ring-2 focus:ring-brand-purple focus:border-brand-purple outline-none resize-vertical min-h-[120px] text-gray-900 dark:text-gray-100"
             rows={5}
             placeholder="Suas anotações pessoais..."
-            value={noteForDay}
-            onChange={(e) => updateNote(chapter.day, e.target.value)}
+            value={localNote}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              setLocalNote(newValue);
+              debouncedUpdateNote(chapter.day, newValue);
+            }}
           />
         </Section>
 
