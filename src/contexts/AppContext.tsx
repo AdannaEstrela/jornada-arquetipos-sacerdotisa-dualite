@@ -91,17 +91,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     setLoading(true);
     try {
-      const [progressRes, favoritesRes, notesRes, quizRes, prefsRes] = await Promise.all([
+      const [progressRes, favoritesRes, notesRes, quizRes, profileRes] = await Promise.all([
         supabase.from('progress').select('day_id').eq('user_id', user.id),
         supabase.from('favorites').select('day_id').eq('user_id', user.id),
         supabase.from('notes').select('day_id, content').eq('user_id', user.id),
         supabase.from('quiz_answers').select('day_id, question_index, answer').eq('user_id', user.id),
-        supabase.from('user_preferences').select('*').eq('user_id', user.id).single(),
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
       ]);
 
-      if (prefsRes.data) {
-        setTheme(prefsRes.data.theme as Theme || 'light');
-        setFontSize(prefsRes.data.font_size as FontSize || 'base');
+      if (profileRes.data) {
+        setTheme((profileRes.data as any).theme as Theme || 'light');
+        setFontSize((profileRes.data as any).font_size as FontSize || 'base');
       }
 
       const newProgress: UserProgress = {
@@ -125,7 +125,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const updatePreference = async (key: 'theme' | 'font_size', value: string) => {
     if (!user) return;
-    await supabase.from('user_preferences').upsert({ user_id: user.id, [key]: value });
+    await supabase.from('profiles').upsert({ id: user.id, [key]: value });
   };
 
   const toggleTheme = () => {
@@ -174,7 +174,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         [day]: { ...(prev.quizAnswers[day] || {}), [questionIndex]: answer },
       },
     }));
-    await supabase.from('quiz_answers').upsert({ user_id: user.id, day_id: day, question_index: questionIndex, answer: answer });
+    await supabase.from('quiz_answers').upsert(
+      { user_id: user.id, day_id: day, question_index: questionIndex, answer: answer },
+      { onConflict: 'user_id,day_id,question_index' }
+    );
   };
 
   return (

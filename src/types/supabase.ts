@@ -169,35 +169,6 @@ export type Database = {
           }
         ]
       }
-      user_preferences: {
-        Row: {
-          font_size: string | null
-          theme: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          font_size?: string | null
-          theme?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          font_size?: string | null
-          theme?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
     }
     Views: {
       [_ in never]: never
